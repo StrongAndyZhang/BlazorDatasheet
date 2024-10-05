@@ -74,7 +74,7 @@ public class ValidationManager
         if (index == null)
         {
             index = _validators.Count;
-            _validators.Add(index.Value, validator);
+            _validators.TryAdd(index.Value, validator);
         }
 
         Store.Add(region, index.Value);
@@ -95,7 +95,6 @@ public class ValidationManager
     {
         AddImpl(validator, new Region(row, col));
     }
-
 
     /// <summary>
     /// Clears the data validator from the region
