@@ -1,0 +1,213 @@
+﻿.vars {
+    --sheet-font-weight: normal;
+    --sheet-font-size: 0.75rem;
+    --sheet-font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Helvetica Neue, Arial, sans-serif;
+}
+
+.vars[theme='default'] {
+    --sheet-foreground-color: #454545;
+    --sheet-bg-color: #ffffff;
+    --sheet-border-style: 1px solid #c5c5c5;
+    --row-header-bg-color: #fafafa;
+    --col-header-bg-color: #fafafa;
+    --headers-foreground-color: #5c5a5a;
+    --active-header-bg-color: rgba(121, 150, 179, 0.18);
+    --icon-color: #000000;
+    --shadow-overlay-color: grey;
+    --invalid-cell-foreground-color: #ff0000;
+    --selection-bg-color: rgba(163, 188, 213, 0.18);
+    --selection-border-color: #0998e5;
+    --cell-highlight-bg-color: #a9e5b6;
+    --num-highlight-color: #43a3b4;
+    --string-highlight-color: #1a6206;
+    --sheet-menu-bg-color: #fff;
+    --sheet-menu-hover-color: #cde6f6;
+}
+
+.vars[theme='dark'] {
+    --sheet-foreground-color: #a9a9a9;
+    --sheet-bg-color: #262626;
+    --sheet-border-style: 1px solid #3f3f3f;
+    --row-header-bg-color: #2d2d2d;
+    --col-header-bg-color: #2d2d2d;
+    --headers-foreground-color: #a4a4a4;
+    --active-header-bg-color: rgb(25, 25, 50, 0.18);
+    --icon-color: #000000;
+    --shadow-overlay-color: #000000;
+    --invalid-cell-foreground-color: #d71b1b;
+    --selection-bg-color: rgba(83, 101, 121, 0.18);
+    --selection-border-color: #1c6f9a;
+    --cell-highlight-bg-color: #456b4d;
+    --num-highlight-color: #d4d6ec;
+    --string-highlight-color: #79a16a;
+    --sheet-menu-bg-color: #333;
+    --sheet-menu-hover-color: #202e3e;
+}
+
+.active-sheet {
+    border: none;
+}
+
+.inactive-sheet {
+    border: none;
+}
+
+.sheet {
+    background: var(--sheet-bg-color);
+    font-size: var(--sheet-font-size);
+    box-sizing: border-box;
+    position: relative;
+    display: block;
+    white-space: nowrap;
+    font-family: var(--sheet-font-family), serif;
+    -moz-osx-font-smoothing: grayscale;
+    font-weight: var(--sheet-font-weight);
+    color: var(--sheet-foreground-color);
+}
+
+.sheet-fixed-height {
+    overflow-y: scroll;
+}
+
+.sheet-fixed-width {
+    overflow-x: scroll;
+}
+
+.sheet-dynamic-height {
+
+}
+
+.sheet-cell {
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    padding: 0 4px;
+    overflow: hidden;
+    line-height: 20px;
+    height: 20px;
+    vertical-align: top;
+}
+
+.merged-cell {
+    background: var(--sheet-bg-color);
+    border: var(--sheet-border-style);
+}
+
+.sheet-table {
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-top: var(--sheet-border-style);
+    border-left: var(--sheet-border-style);
+}
+
+.sheet-table td, th {
+    border-right: var(--sheet-border-style);
+    border-bottom: var(--sheet-border-style);
+}
+
+.col-sticky {
+    box-shadow: 0 4px 6px -6px var(--shadow-overlay-color);
+    position: sticky;
+    top: 0;
+    z-index: 3;
+}
+
+.col-nonsticky {
+    border-bottom: var(--sheet-border-style);
+}
+
+.row-sticky {
+    position: sticky;
+    z-index: 3;
+    left: 0;
+}
+
+.row-head {
+    text-align: right;
+    background: var(--row-header-bg-color)
+}
+
+.row-head :hover {
+    background: var(--selection-bg-color);
+}
+
+.col-head {
+    background: var(--row-header-bg-color);
+}
+
+.col-head :hover {
+    background: var(--selection-bg-color);
+}
+
+.invalid-cell {
+    color: var(--invalid-cell-foreground-color) !important;
+}
+
+.column-active {
+    background: var(--active-header-bg-color) !important;
+}
+
+.row-active {
+    background: var(--active-header-bg-color) !important;
+}
+
+.collapsed-row > th, .collapsed-row > tr, .collapsed-row > td {
+    padding: 0;
+    margin: 0;
+    border: 0;
+    border-spacing: 0;
+}
+
+.unselectable {
+    -webkit-user-drag: none;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
+.number-highlight {
+    color: var(--num-highlight-color)
+}
+
+.string-highlight {
+    color: var(--string-highlight-color)
+}
+
+.default-highlight {
+    color: var(--sheet-foreground-color)
+}
+
+.editor-overlay {
+    background: var(--sheet-bg-color);
+    box-shadow: 0 0 4px var(--shadow-overlay-color);
+}
+
+.highlight-input {
+    outline: 0 solid transparent;
+    color: transparent;
+    caret-color: var(--sheet-foreground-color);
+    -webkit-user-modify: read-write-plaintext-only;
+}
+
+.highlight-input:focus {
+    outline: 0 solid transparent;
+}
+
+.highlight-input, .highlight-result {
+    height: 100%;
+    min-width: 100%;
+    display: inline-block;
+    position: absolute;
+    padding: 1px 4px;
+    top: 0;
+    left: 0;
+    white-space: pre;
+    z-index: 2;
+}
+
+.highlight-result {
+    pointer-events: none;
+    background: inherit;
+}
