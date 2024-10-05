@@ -1,3 +1,5 @@
+Try to fix some issues and add some enhancements.
+
 # BlazorDatasheet
 
 A simple datasheet component for editing tabular data.
