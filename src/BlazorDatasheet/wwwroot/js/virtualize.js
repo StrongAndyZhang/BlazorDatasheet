@@ -1,5 +1,4 @@
 ﻿class Virtualizer {
-
     findScrollableAncestor(element) {
         let parent = element.parentElement
 
@@ -33,7 +32,7 @@
         // scroll height/width is always the height/width of the element
         let scrollHeight = wholeSheetRect.height
         let scrollWidth = wholeSheetRect.width
-        
+
         return {
             scrollLeft: scrollLeft,
             scrollTop: scrollTop,
@@ -43,11 +42,11 @@
     }
 
     disposeVirtualisationHandlers(el) {
-        this.leftHandlerMutMap[el].disconnect()
-        this.rightHandlerMutMap[el].disconnect()
-        this.topHandlerMutMap[el].disconnect()
-        this.bottomHandlerMutMap[el].disconnect()
-        this.interactionMap[el].disconnect()
+        //this.leftHandlerMutMap[el].disconnect()
+        //this.rightHandlerMutMap[el].disconnect()
+        //this.topHandlerMutMap[el].disconnect()
+        //this.bottomHandlerMutMap[el].disconnect()
+        //this.interactionMap[el].disconnect()
 
         this.leftHandlerMutMap[el] = {}
         this.rightHandlerMutMap[el] = {}
@@ -64,7 +63,6 @@
     resizeMap = {}
 
     addVirtualisationHandlers(dotNetHelper, el, dotnetScrollHandlerName, fillerLeft, fillerTop, fillerRight, fillerBottom) {
-
         // return initial scroll event to render the sheet
         let parent = this.findScrollableAncestor(el)
         if (parent) {
@@ -91,8 +89,7 @@
                 let offset = getViewPort(el)
                 dotNetHelper.invokeMethodAsync(dotnetScrollHandlerName, offset);
             }
-
-        }, {root: parent, threshold: 0})
+        }, { root: parent, threshold: 0 })
 
         observer.observe(fillerTop)
         observer.observe(fillerBottom)
@@ -105,7 +102,6 @@
         this.bottomHandlerMutMap[el] = this.createMutationObserver(fillerBottom, observer)
         this.leftHandlerMutMap[el] = this.createMutationObserver(fillerLeft, observer)
         this.rightHandlerMutMap[el] = this.createMutationObserver(fillerRight, observer)
-
     }
 
     /***
@@ -135,7 +131,7 @@
             interactionObserver.observe(filler)
         })
 
-        mutationObserver.observe(filler, {attributes: true})
+        mutationObserver.observe(filler, { attributes: true })
         return mutationObserver
     }
 
@@ -144,6 +140,6 @@
 
 export function
 
-getVirtualizer() {
+    getVirtualizer() {
     return new Virtualizer()
 }
