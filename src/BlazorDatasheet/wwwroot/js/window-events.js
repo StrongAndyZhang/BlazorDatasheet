@@ -54,7 +54,7 @@
         if (e) {
             return {
                 key: e.key,
-                code: e.keyCode.toString(),
+                code: e.keyCode?.toString(),
                 location: e.location,
                 repeat: e.repeat,
                 ctrlKey: e.ctrlKey,
