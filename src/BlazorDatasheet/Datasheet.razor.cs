@@ -168,6 +168,11 @@ public partial class Datasheet : SheetComponentBase
     [Parameter] public RenderFragment? EmptyColumnsTemplate { get; set; }
 
     [Parameter] public RenderFragment? EmptyRowsTemplate { get; set; }
+    
+    /// <summary>
+    /// When set, this restricts the datasheet to viewing this region, otherwise the datasheet views the whole sheet.
+    /// </summary>
+    [Parameter] public Region? ViewRegion { get; set; }
 
     /// <summary>
     /// The datasheet keyboard shortcut manager
@@ -323,6 +328,7 @@ public partial class Datasheet : SheetComponentBase
 
         _cellLayoutProvider.IncludeColHeadings = ShowColHeadings;
         _cellLayoutProvider.IncludeRowHeadings = ShowRowHeadings;
+        _cellLayoutProvider.SetViewRegion(ViewRegion);
 
         base.OnParametersSet();
     }
@@ -629,7 +635,7 @@ public partial class Datasheet : SheetComponentBase
 
         ShortcutManager.Register(["Delete", "Backspace"], KeyboardModifiers.Any,
             _ => Sheet.Commands.ExecuteCommand(new ClearCellsCommand(Sheet.Selection.Regions)),
-            _ => Sheet.Selection.Regions.Any());
+            _ => Sheet.Selection.Regions.Any() && !Sheet.Editor.IsEditing);
     }
 
     private async Task<bool> HandleArrowKeysDown(bool shift, Offset offset)
