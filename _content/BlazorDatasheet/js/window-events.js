@@ -2,6 +2,8 @@
     constructor(dotnetHelper) {
         this.dotnetHelper = dotnetHelper;
         this.handlerMap = {}
+        this.preventDefaultMap = {}
+        this.preventExclusionsMap = {}
     }
 
     registerEvent(eventName, handlerName) {
@@ -17,16 +19,37 @@
 
     }
 
+    preventDefault(eventName, exclusions) {
+        this.preventDefaultMap[eventName] = true;
+        this.preventExclusionsMap[eventName] = exclusions;
+
+    }
+
+    cancelPreventDefault(eventType) {
+        this.preventDefaultMap[eventType] = false;
+        this.preventExclusionsMap[eventType] = []
+    }
+
     /**
      *
-     * @param e {MouseEvent}
+     * @param e {KeyboardEvent}
      */
     async handleWindowEvent(e) {
         if (this.handlerMap[e.type]) {
+            if (this.preventDefaultMap[e.type]) {
+
+                let preventDefault = true
+
+                if (e.type === 'keydown' && e.code === 'KeyV')
+                    preventDefault = false
+
+                if (preventDefault)
+                    e.preventDefault()
+            }
+
             let respIsHandled = await this.dotnetHelper.invokeMethodAsync(this.handlerMap[e.type], this.serialize(e));
             if (respIsHandled === true) {
                 e.preventDefault();
-                e.stopImmediatePropagation();
             }
         }
     }
@@ -54,7 +77,7 @@
         if (e) {
             return {
                 key: e.key,
-                code: e.keyCode.toString(),
+                code: e.code,
                 location: e.location,
                 repeat: e.repeat,
                 ctrlKey: e.ctrlKey,
