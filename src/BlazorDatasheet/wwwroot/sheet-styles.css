@@ -133,11 +133,12 @@
     -moz-user-select: none;
     -webkit-user-select: none;
     padding: 2px 5px;
-    height: 100%;
-    width: 100%;
     border-right: var(--sheet-border-style);
     border-bottom: var(--sheet-border-style);
     overflow: hidden;
+    width: 100%;
+    height: 100%;
+    display: flex;
 }
 
 .merged-cell {
@@ -178,6 +179,8 @@
 .row-head {
     text-align: right;
     border-left: var(--sheet-border-style);
+    justify-content: end;
+    align-items: center;
 }
 
 .col-head {
@@ -251,15 +254,12 @@
 }
 
 .highlight-input, .highlight-result {
-    display: inline-block;
+    display: block;
     position: absolute;
     padding: 1px 4px;
     top: 0;
     left: 0;
-    white-space: pre;
-    z-index: 2;
-    text-wrap: stable;
-    overflow-wrap: anywhere;
+    z-index: 1;
 }
 
 .highlight-result {
@@ -267,16 +267,28 @@
     background: inherit;
 }
 
-.bds-selected-header-full{
+.bds-frozen-left .highlight-input, .bds-frozen-left .highlight-result {
+    text-wrap: wrap;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+.bds-frozen-right .highlight-input, .bds-frozen-right .highlight-result {
+    text-wrap: wrap;
+    overflow-wrap: anywhere;
+    white-space: break-spaces;
+}
+
+.bds-selected-header-full {
     background: var(--header-selected-bg-color);
-    color:white;
+    color: white;
     font-weight: bold;
 }
 
-.bds-selected-header-full:hover{
+.bds-selected-header-full:hover {
     background: var(--header-selected-bg-color);
 }
 
-.bds-selected-header{
+.bds-selected-header {
     background: var(--selection-bg-color);
 }

@@ -5,7 +5,7 @@
 @{
     var colOffset = 1;
 }
-@foreach(var col in VisibleColIndices)
+@foreach (var col in VisibleColIndices)
 {
     var dataCol = col;
     var dataRow = Row;
@@ -26,7 +26,7 @@
     }
 
     <div @key="col"
-         style="grid-row: 1 / span @visualCell.VisibleRowSpan; grid-column:@colOffset / span @visualCell.VisibleColSpan;">
+         style="grid-row: 1; grid-column:@colOffset;">
         <div
             data-row="@dataRow"
             data-col="@dataCol"
@@ -80,14 +80,13 @@
 
     [Parameter, EditorRequired] public Dictionary<CellPosition, VisualCell> Cache { get; set; } = null!;
 
-    [CascadingParameter(Name = "Icons")] 
-    public Dictionary<string, RenderFragment> Icons { get; set; } = default!;
-    
-    [CascadingParameter(Name = "CustomCellTypeDefinitions")] 
+    [CascadingParameter(Name = "Icons")] public Dictionary<string, RenderFragment> Icons { get; set; } = default!;
+
+    [CascadingParameter(Name = "CustomCellTypeDefinitions")]
     public Dictionary<string, CellTypeDefinition> CustomCellTypeDefinitions { get; set; } = default!;
 
     protected override bool ShouldRender() => IsDirty;
-    
+
     private Type GetCellRendererType(string type)
     {
         if (CustomCellTypeDefinitions.TryGetValue(type, out var definition))
@@ -95,7 +94,7 @@
 
         return typeof(TextRenderer);
     }
-    
+
     private Dictionary<string, object> GetCellRendererParameters(VisualCell visualCell)
     {
         return new Dictionary<string, object>()
