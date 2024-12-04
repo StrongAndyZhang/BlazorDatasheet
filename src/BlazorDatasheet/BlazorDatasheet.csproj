@@ -11,17 +11,25 @@
         <RepositoryType>git</RepositoryType>
         <PackageTags>blazor,editor,excel,spreadsheet,datasheet</PackageTags>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <Version>0.5.0.0</Version>
-        <TargetFramework>net8.0</TargetFramework>
+        <Version>0.5.2.1</Version>
+        <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
+    
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 
 
     <ItemGroup>
         <SupportedPlatform Include="browser" />
     </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.10" />
+    
+    <ItemGroup Condition="  '$(TargetFramework)' == 'net8.0'  ">
+        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.*" />
+    </ItemGroup>
+    <ItemGroup Condition="  '$(TargetFramework)' == 'net9.0'  ">
+        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.*" />
     </ItemGroup>
 
     <ItemGroup>
@@ -32,10 +40,6 @@
       <ProjectReference Include="..\BlazorDatasheet.Core\BlazorDatasheet.Core.csproj" />
       <ProjectReference Include="..\BlazorDatasheet.DataStructures\BlazorDatasheet.DataStructures.csproj" />
       <ProjectReference Include="..\BlazorDatasheet.Formula.Core\BlazorDatasheet.Formula.Core.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <_ContentIncludedByDefault Remove="Icons\Icons.razor" />
     </ItemGroup>
 
 </Project>

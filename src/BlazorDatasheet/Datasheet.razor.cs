@@ -26,10 +26,10 @@ using Microsoft.JSInterop;
 
 namespace BlazorDatasheet;
 
-public partial class Datasheet : SheetComponentBase
+public partial class Datasheet : SheetComponentBase, IAsyncDisposable
 {
     [Inject] private IJSRuntime Js { get; set; } = null!;
-    [Inject] private IWindowEventService WindowEventService { get; set; } = null!;
+    private IWindowEventService _windowEventService = null!;
     [Inject] private IMenuService MenuService { get; set; } = null!;
     private IClipboard ClipboardService { get; set; } = null!;
 
@@ -178,6 +178,18 @@ public partial class Datasheet : SheetComponentBase
     public Type[] DefaultFilterTypes { get; set; } = [typeof(ValueFilter), typeof(PatternFilter)];
 
     /// <summary>
+    /// The number of columns past the end of the viewport to render.
+    /// </summary>
+    [Parameter]
+    public int OverscanColumns { get; set; } = 2;
+
+    /// <summary>
+    /// The number of rows past the end of the viewport to render.
+    /// </summary>
+    [Parameter]
+    public int OverscanRows { get; set; } = 6;
+
+    /// <summary>
     /// Provides menu options for the sheet
     /// </summary>
     [Parameter]
@@ -185,9 +197,9 @@ public partial class Datasheet : SheetComponentBase
 
     private SheetMenuOptions _menuOptions = new();
 
-    private DotNetObjectReference<Datasheet> _dotnetHelper = default!;
+    private DotNetObjectReference<Datasheet>? _dotnetHelper;
 
-    private SheetPointerInputService _sheetPointerInputService = null!;
+    private SheetPointerInputService? _sheetPointerInputService;
 
     /// <summary>
     /// The whole sheet container, useful for checking whether mouse is inside the sheet
@@ -237,6 +249,7 @@ public partial class Datasheet : SheetComponentBase
     protected override void OnInitialized()
     {
         ClipboardService = new Clipboard(Js);
+        _windowEventService = new WindowEventService(Js);
         RegisterDefaultShortcuts();
         base.OnInitialized();
     }
@@ -318,7 +331,7 @@ public partial class Datasheet : SheetComponentBase
             _sheetPointerInputService = new SheetPointerInputService(Js, _sheetContainer);
             await _sheetPointerInputService.Init();
 
-            _sheetPointerInputService.PointerDown += this.HandleCellMouseDown;
+            _sheetPointerInputService.PointerDown += HandleCellMouseDown;
             _sheetPointerInputService.PointerEnter += HandleCellMouseOver;
             _sheetPointerInputService.PointerDoubleClick += HandleCellDoubleClick;
 
@@ -338,6 +351,17 @@ public partial class Datasheet : SheetComponentBase
         _sheet.Editor.EditFinished -= EditorOnEditFinished;
         _sheet.SheetDirty -= SheetOnSheetDirty;
         _sheet.ScreenUpdatingChanged -= ScreenUpdatingChanged;
+
+        if (GridLevel == 0)
+        {
+            _sheet.Rows.Inserted -= HandleRowColInserted;
+            _sheet.Columns.Inserted -= HandleRowColInserted;
+            _sheet.Rows.Removed -= HandleRowColRemoved;
+            _sheet.Columns.Removed -= HandleRowColRemoved;
+        }
+
+        _sheet.Rows.SizeModified -= HandleSizeModified;
+        _sheet.Columns.SizeModified -= HandleSizeModified;
     }
 
     private void AddEvents(Sheet sheet)
@@ -356,15 +380,16 @@ public partial class Datasheet : SheetComponentBase
 
         _sheet.Rows.SizeModified += HandleSizeModified;
         _sheet.Columns.SizeModified += HandleSizeModified;
+        _sheet.SetDialogService(new SimpleDialogService(Js));
     }
 
     private async Task AddWindowEventsAsync()
     {
-        await WindowEventService.RegisterMouseEvent("mousedown", HandleWindowMouseDown);
-        await WindowEventService.RegisterKeyEvent("keydown", HandleWindowKeyDown);
-        await WindowEventService.RegisterClipboardEvent("paste", HandleWindowPaste);
-        await WindowEventService.RegisterClipboardEvent("copy", HandleWindowCopy);
-        await WindowEventService.RegisterMouseEvent("mouseup", HandleWindowMouseUp);
+        await _windowEventService.RegisterMouseEvent("mousedown", HandleWindowMouseDown);
+        await _windowEventService.RegisterKeyEvent("keydown", HandleWindowKeyDown);
+        await _windowEventService.RegisterClipboardEvent("paste", HandleWindowPaste);
+        await _windowEventService.RegisterClipboardEvent("copy", HandleWindowCopy);
+        await _windowEventService.RegisterMouseEvent("mouseup", HandleWindowMouseUp);
     }
 
     private void HandleRowColInserted(object? sender, RowColInsertedEventArgs? e) => ForceReRender();
@@ -454,12 +479,12 @@ public partial class Datasheet : SheetComponentBase
 
     private async void EditorOnEditFinished(object? sender, EditFinishedEventArgs e)
     {
-        await WindowEventService.PreventDefault("keydown");
+        await _windowEventService.PreventDefault("keydown");
     }
 
     private async void EditorOnEditBegin(object? sender, EditBeginEventArgs e)
     {
-        await WindowEventService.CancelPreventDefault("keydown");
+        await _windowEventService.CancelPreventDefault("keydown");
     }
 
 
@@ -676,7 +701,6 @@ public partial class Datasheet : SheetComponentBase
 
     private async Task<bool> HandleWindowCopy(ClipboardEventArgs arg)
     {
-        Console.WriteLine($"Copy");
         if (!IsDataSheetActive || _sheet.Editor.IsEditing)
             return false;
 
@@ -736,6 +760,9 @@ public partial class Datasheet : SheetComponentBase
         // the viewRect we have from the viewport includes the frozen cols 
         // so we need to consider those when considering whether the region is outside of the view
         var currentViewRect = await _mainView.CalculateViewRect(_sheetContainer);
+        if (currentViewRect == null)
+            return;
+
         var constrainedViewRect = new Rect(
             currentViewRect.X + frozenLeftW,
             currentViewRect.Y + frozenTopH,
@@ -856,9 +883,9 @@ public partial class Datasheet : SheetComponentBase
             return;
 
         if (active)
-            await WindowEventService.PreventDefault("keydown");
+            await _windowEventService.PreventDefault("keydown");
         else
-            await WindowEventService.CancelPreventDefault("keydown");
+            await _windowEventService.CancelPreventDefault("keydown");
 
         IsDataSheetActive = active;
         await OnSheetActiveChanged.InvokeAsync(new SheetActiveEventArgs(this, active));
@@ -902,5 +929,16 @@ public partial class Datasheet : SheetComponentBase
 
         var shouldRender = _sheet.ScreenUpdating && (_sheetIsDirty || _dirtyRows.Count != 0);
         return shouldRender;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_dotnetHelper is not null)
+            _dotnetHelper.Dispose();
+
+        if (_sheetPointerInputService is not null)
+            await _sheetPointerInputService.DisposeAsync();
+
+        await _windowEventService.DisposeAsync();
     }
 }

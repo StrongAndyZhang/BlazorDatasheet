@@ -1,16 +1,19 @@
 ﻿class Virtualiser2d {
 
     findScrollableAncestor(element) {
+        if (!element)
+            return null
+
         let parent = element.parentElement
 
-        if (parent == null || element == document.body || element == document.documentElement)
+        if (parent == null || element === document.body || element === document.documentElement)
             return null
 
         let overflowY = window.getComputedStyle(parent).overflowY
         let overflowX = window.getComputedStyle(parent).overflowX
         let overflow = window.getComputedStyle(parent).overflow
 
-        if (overflowY === 'scroll' || overflowX === 'scroll' || overflow === 'scroll')
+        if (overflowY !== 'visible' || overflowX !== 'visible' || overflow !== 'visible')
             return parent
 
         return this.findScrollableAncestor(parent)
@@ -58,8 +61,11 @@
 
         let top = parent.scrollTop - offseTTop
         let left = parent.scrollLeft - offsetLeft
-        let width = parent.clientWidth
-        let height = parent.clientHeight
+        let width = parent === document.documentElement ? window.innerWidth : parent.clientWidth
+        let height = parent === document.documentElement ? window.innerHeight : parent.clientHeight
+        width += 1
+        height += 1
+
 
         let rect = {
             x: left,
@@ -67,7 +73,7 @@
             width: width,
             height: height
         }
-        
+
         return rect
     }
 
@@ -100,7 +106,7 @@
 
     isScrollable(el) {
         let style = window.getComputedStyle(el)
-        return style.overflow === 'scroll' || style.overflowX === 'scroll' || style.overflowY === 'scroll'
+        return style.overflow !== 'visible' || style.overflowX !== 'visible' || style.overflowY !== 'visible'
     }
 
     isInsideSticky(el) {
@@ -125,6 +131,7 @@
     }
 
     addVirtualisationHandlers(dotNetHelper, wholeEl, dotnetScrollHandlerName, fillerLeft, fillerTop, fillerRight, fillerBottom) {
+        this.id = crypto.randomUUID()
         // return initial scroll event to render the sheet
         let parent = this.findScrollableAncestor(wholeEl)
         if (parent) {

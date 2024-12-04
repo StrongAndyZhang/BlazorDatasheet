@@ -3,9 +3,10 @@
 @using BlazorDatasheet.Menu
 @using BlazorDatasheet.Services
 @using BlazorDatasheet.Virtualise
+@using Microsoft.JSInterop
 @inherits HeadingRenderer
-@inject IWindowEventService WindowEventService
 @implements IAsyncDisposable
+@inject IJSRuntime Js;
 
 <div style="display: flex; flex-direction: row">
 
@@ -41,11 +42,12 @@
         <Virtualise2D
             @ref="MainView"
             LayoutProvider="LayoutProvider"
+            OverscanColumns="OverscanColumns"
             ViewRegion="new Region(0, 0, _viewRegion.Left + FrozenStartCount, _viewRegion.Right - FrozenEndCount)">
             <GridItemTemplate>
                 <div
                     @key="context.col"
-                    style="width: 100%; display: flex; justify-content: start; position: relative; overflow-x: visible;">
+                    style="width: 100%; height: 100%; display: flex; justify-content: start; position: relative; overflow-x: visible;">
                     <div class="col-head sheet-cell @GetSelectedClass(context.col)" data-col="@context.col"
                          data-row="-1"
                          style="display: flex; justify-content: space-between; width: 100%;">
@@ -99,6 +101,12 @@
     [Parameter] public int FrozenEndCount { get; set; }
 
     [Parameter] public bool ShowColumnMenu { get; set; }
+    
+    /// <summary>
+    /// The number of columns past the end of the viewport to render.
+    /// </summary>
+    [Parameter]
+    public int OverscanColumns { get; set; } = 2;
 
     private double MouseX { get; set; }
     private double MouseXStart { get; set; }
@@ -106,14 +114,21 @@
     private bool IsDragging { get; set; }
     private double CurrentColResizeAmount { get; set; }
     private int _minResizeWidth = 15;
+    private IWindowEventService _windowEventService = null!;
+
+    protected override void OnInitialized()
+    {
+        _windowEventService = new WindowEventService(Js);
+        base.OnInitialized();
+    }
 
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await WindowEventService.RegisterMouseEvent("mouseup", WindowEventServiceOnOnMouseUp, 50);
-            await WindowEventService.RegisterMouseEvent("mousemove", WindowHandleMouseMove, 50);
+            await _windowEventService.RegisterMouseEvent("mouseup", WindowEventServiceOnOnMouseUp, 15);
+            await _windowEventService.RegisterMouseEvent("mousemove", WindowHandleMouseMove, 15);
         }
     }
 
@@ -177,7 +192,7 @@
 
     public async ValueTask DisposeAsync()
     {
-        if (WindowEventService != null) await WindowEventService.DisposeAsync();
+        await _windowEventService.DisposeAsync();
     }
 
 }
