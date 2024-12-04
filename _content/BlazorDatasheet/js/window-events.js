@@ -6,13 +6,15 @@
         this.preventExclusionsMap = {}
     }
 
-    registerEvent(eventName, handlerName) {
+    registerEvent(eventName, handlerName, throttleInMs = 0) {
         try {
             if (this.handlerMap[eventName])
                 window.removeEventListener(eventName, this.handleWindowEvent)
 
             this.handlerMap[eventName] = handlerName;
-            window.addEventListener(eventName, this.handleWindowEvent.bind(this))
+            let fn = throttleInMs === 0 ?
+                this.handleWindowEvent.bind(this) : this.throttle(this.handleWindowEvent.bind(this), throttleInMs)
+            window.addEventListener(eventName, fn)
         } catch (ex) {
             return false
         }
@@ -69,7 +71,7 @@
             return this.serializeKeyboardEvent(e)
         else if (e.type.includes('mouse'))
             return this.serializeMouseEvent(e)
-        else if (e.type.includes('paste'))
+        else if (e.type.includes('paste') || e.type.includes('copy'))
             return this.serializeClipboardEvent(e)
     }
 
@@ -131,8 +133,27 @@
         }
     }
 
+// https://stackoverflow.com/questions/27078285/simple-throttle-in-javascript
+// Returns a function, that, when invoked, will only be triggered at most once
+// during a given window of time. Normally, the throttled function will run
+// as much as it can, without ever going more than once per `wait` duration;
+// but if you'd like to disable the execution on the leading edge, pass
+// `{leading: false}`. To disable execution on the trailing edge, ditto.
+    throttle(mainFunction, delay) {
+        let timerFlag = null;
+        return (...args) => {
+            if (timerFlag === null) {
+                mainFunction(...args);
+                timerFlag = setTimeout(() => {
+                    timerFlag = null;
+                }, delay);
+            }
+        };
+    }
+
+
 }
 
-export function createWindowEvents(dotnetHelper) {
+export function createWindowEventsService(dotnetHelper) {
     return new WindowEvents(dotnetHelper);
 }
