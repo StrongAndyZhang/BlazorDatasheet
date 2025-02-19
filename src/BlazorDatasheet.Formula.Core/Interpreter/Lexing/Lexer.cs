@@ -1,6 +1,5 @@
-using BlazorDatasheet.DataStructures.Util;
+using System.Globalization;
 using BlazorDatasheet.Formula.Core.Interpreter.Addresses;
-using BlazorDatasheet.Formula.Core.Interpreter.References;
 
 namespace BlazorDatasheet.Formula.Core.Interpreter.Lexing;
 
@@ -64,9 +63,9 @@ public ref struct Lexer
             return new EndOfFileToken(_position);
 
         if (char.IsDigit(_current))
-            return ReadNumber(false);
-        else if (_current == '.')
-            return ReadNumber(true);
+            return ReadNumber();
+        if (_string.Slice(_position).StartsWith(NumberFormatInfo.CurrentInfo.NumberDecimalSeparator))
+            return ReadNumber();
 
         if (char.IsLetter(_current) || _current == '$')
             return ReadIdentifier();
@@ -97,6 +96,9 @@ public ref struct Lexer
                 break;
             case '&':
                 token = new Token(Tag.AmpersandToken, "&", _position);
+                break;
+            case '%':
+                token = new Token(Tag.PercentToken, "%", _position);
                 break;
             case '>':
                 if (Peek(1) == '=')
@@ -153,28 +155,26 @@ public ref struct Lexer
         return token;
     }
 
-    private Token ReadNumber(bool containsPeriod)
+    private Token ReadNumber()
     {
         int start = _position;
+        bool containsE = false;
         Next();
 
-        while ((char.IsDigit(_current) || _current == '.'))
+        while (char.IsDigit(_current) ||
+               _current == Convert.ToChar(NumberFormatInfo.CurrentInfo.NumberDecimalSeparator) ||
+               _current == 'e' ||
+               (containsE &&
+                _current == Convert.ToChar(NumberFormatInfo.CurrentInfo
+                    .NegativeSign))) // e and - so that we can parse scientific notation.
         {
-            if (_current == '.')
-                containsPeriod = true;
+            if (_current == 'e')
+                containsE = true;
+
             Next();
         }
 
         int length = _position - start;
-
-        if (containsPeriod) // could be double
-        {
-            if (double.TryParse(_string.Slice(start, length), out var parsedDouble))
-                return new NumberToken(parsedDouble, start);
-
-            Error($"{_string.Slice(start, length).ToString()} is not a number");
-            return new BadToken(_position);
-        }
 
         if (int.TryParse(_string.Slice(start, length), out var parsedInt))
         {
@@ -222,6 +222,10 @@ public ref struct Lexer
             return new NumberToken(parsedInt, start);
         }
 
+        if (double.TryParse(_string.Slice(start, length), out var parsedDouble))
+            return new NumberToken(parsedDouble, start);
+
+        Error($"{_string.Slice(start, length).ToString()} is not a number");
         return new BadToken(_position);
     }
 
@@ -256,7 +260,7 @@ public ref struct Lexer
 
             // store temp position so we can come back to it
             var tempPosition = _position;
-            var colon = ReadToken();
+            ReadToken(); // colon
             var next = ReadToken();
 
             _referenceState = LexerReferenceState.None;
@@ -285,7 +289,7 @@ public ref struct Lexer
             ResetPosition(tempPosition);
         }
 
-        if (canParseRef && parsedLeftAddress!.Kind == AddressKind.CellAddress)
+        if (canParseRef && parsedLeftAddress.Kind == AddressKind.CellAddress)
             return new AddressToken(parsedLeftAddress, start);
 
         return new IdentifierToken(idSlice.ToString(), start);
