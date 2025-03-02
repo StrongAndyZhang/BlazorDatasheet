@@ -9,7 +9,7 @@ public class BinaryOpEvaluator
     private readonly CellValueCoercer _cellValueCoercer;
     private readonly IEnvironment _environment;
 
-    public BinaryOpEvaluator(CellValueCoercer cellValueCoercer, IEnvironment environment)
+    internal BinaryOpEvaluator(CellValueCoercer cellValueCoercer, IEnvironment environment)
     {
         _cellValueCoercer = cellValueCoercer;
         _environment = environment;
@@ -79,7 +79,13 @@ public class BinaryOpEvaluator
         var c1 = new CellAddress(regJoined.Top, regJoined.Left);
         var c2 = new CellAddress(regJoined.Bottom, regJoined.Right);
 
-        return CellValue.Reference(new RangeReference(c1, c2));
+        var sheetName = leftRef.SheetName;
+        if (sheetName != rightRef.SheetName)
+            return CellValue.Error(ErrorType.Ref);
+
+        var rangeRef = new RangeReference(c1, c2);
+        rangeRef.SetSheetName(sheetName, explicitSheetName: true);
+        return CellValue.Reference(rangeRef);
     }
 
     private CellValue EvaluateLessThan(CellValue left, CellValue right)
@@ -124,7 +130,7 @@ public class BinaryOpEvaluator
         return CellValue.Logical(!left.IsEqualTo(right));
     }
 
-    public CellValue EvaluateDivide(CellValue left, CellValue right)
+    private CellValue EvaluateDivide(CellValue left, CellValue right)
     {
         var numPair = CoercedPair.AsNumbers(left, right, _cellValueCoercer);
         if (numPair.HasError)
@@ -136,7 +142,7 @@ public class BinaryOpEvaluator
         return CellValue.Number(numPair.Value1 / numPair.Value2);
     }
 
-    public CellValue EvaluateAdd(CellValue left, CellValue right)
+    private CellValue EvaluateAdd(CellValue left, CellValue right)
     {
         var numPair = CoercedPair.AsNumbers(left, right, _cellValueCoercer);
         if (numPair.HasError)
@@ -145,7 +151,7 @@ public class BinaryOpEvaluator
         return CellValue.Number(numPair.Value1 + numPair.Value2);
     }
 
-    public CellValue EvaluateSubtract(CellValue left, CellValue right)
+    private CellValue EvaluateSubtract(CellValue left, CellValue right)
     {
         var numPair = CoercedPair.AsNumbers(left, right, _cellValueCoercer);
         if (numPair.HasError)
@@ -155,7 +161,7 @@ public class BinaryOpEvaluator
     }
 
 
-    public CellValue EvaluateMultiply(CellValue left, CellValue right)
+    private CellValue EvaluateMultiply(CellValue left, CellValue right)
     {
         var numPair = CoercedPair.AsNumbers(left, right, _cellValueCoercer);
         if (numPair.HasError)
@@ -169,7 +175,7 @@ public class BinaryOpEvaluator
         if (value.IsCellReference())
         {
             var cellRef = (CellReference)value.Data!;
-            return _environment.GetCellValue(cellRef.RowIndex, cellRef.ColIndex);
+            return _environment.GetCellValue(cellRef.RowIndex, cellRef.ColIndex, cellRef.SheetName);
         }
 
         return value;

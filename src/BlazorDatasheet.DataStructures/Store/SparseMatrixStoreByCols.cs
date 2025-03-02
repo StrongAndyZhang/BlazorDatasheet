@@ -1,5 +1,4 @@
 using BlazorDatasheet.DataStructures.Geometry;
-using BlazorDatasheet.DataStructures.Search;
 
 namespace BlazorDatasheet.DataStructures.Store;
 
@@ -24,7 +23,7 @@ public class SparseMatrixStoreByCols<T> : IMatrixDataStore<T>
         return _columns[col].Values.ContainsKey(row);
     }
 
-    public T? Get(int row, int col)
+    public T Get(int row, int col)
     {
         var colExists = _columns.TryGetValue(col, out var column);
         if (!colExists)
@@ -120,7 +119,7 @@ public class SparseMatrixStoreByCols<T> : IMatrixDataStore<T>
 
         return new MatrixRestoreData<T>()
         {
-            Shifts = [new AppliedShift(Axis.Row, row, count)]
+            Shifts = [new AppliedShift(Axis.Row, row, count, null)]
         };
     }
 
@@ -147,10 +146,10 @@ public class SparseMatrixStoreByCols<T> : IMatrixDataStore<T>
         {
             _columns.Add(col + i, new SColumn<T>(col + i, _defaultValueIfEmpty));
         }
-        
+
         return new MatrixRestoreData<T>()
         {
-            Shifts = [new AppliedShift(Axis.Col, col, count)]
+            Shifts = [new AppliedShift(Axis.Col, col, count, null)]
         };
     }
 
@@ -187,7 +186,7 @@ public class SparseMatrixStoreByCols<T> : IMatrixDataStore<T>
         return new MatrixRestoreData<T>()
         {
             DataRemoved = deleted,
-            Shifts = [new AppliedShift(Axis.Col, col, -count)]
+            Shifts = [new AppliedShift(Axis.Col, col, -count, null)]
         };
     }
 
@@ -217,7 +216,7 @@ public class SparseMatrixStoreByCols<T> : IMatrixDataStore<T>
         return new MatrixRestoreData<T>()
         {
             DataRemoved = deleted,
-            Shifts = [new AppliedShift(Axis.Row, row, -count)]
+            Shifts = [new AppliedShift(Axis.Row, row, -count, null)]
         };
     }
 
@@ -254,7 +253,7 @@ public class SparseMatrixStoreByCols<T> : IMatrixDataStore<T>
             result[i] = new T[region.Width];
             for (int j = 0; j < region.Width; j++)
             {
-                result[i][j] = Get(i, j);
+                result[i][j] = Get(i, j) ?? _defaultValueIfEmpty;
             }
         }
 
@@ -323,20 +322,20 @@ public class SparseMatrixStoreByCols<T> : IMatrixDataStore<T>
         {
             if (shift.Amount > 0)
             {
-                if(shift.Axis == Axis.Col)
+                if (shift.Axis == Axis.Col)
                     RemoveColAt(shift.Index, shift.Amount);
                 else
                     RemoveRowAt(shift.Index, shift.Amount);
             }
             else
             {
-                if(shift.Axis == Axis.Col)
+                if (shift.Axis == Axis.Col)
                     InsertColAt(shift.Index, -shift.Amount);
                 else
                     InsertRowAt(shift.Index, -shift.Amount);
             }
         }
-        
+
         foreach (var pt in restoreData.DataRemoved)
             Set(pt.row, pt.col, pt.data);
     }
