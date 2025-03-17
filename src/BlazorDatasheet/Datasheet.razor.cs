@@ -271,6 +271,7 @@ public partial class Datasheet : SheetComponentBase, IAsyncDisposable
     protected override async Task OnParametersSetAsync()
     {
         bool requireRender = false;
+        bool forceRerender = false;
 
         if (Sheet != _sheet)
         {
@@ -278,7 +279,7 @@ public partial class Datasheet : SheetComponentBase, IAsyncDisposable
             _sheet = Sheet ?? new(0, 0);
             AddEvents(_sheet);
             _visualCellCache.Clear();
-            ForceReRender();
+            requireRender = true;
         }
 
         if (Theme != _theme)
@@ -290,7 +291,7 @@ public partial class Datasheet : SheetComponentBase, IAsyncDisposable
         if (!_viewRegion.Equals(ViewRegion))
         {
             _viewRegion = ViewRegion ?? _sheet.Region;
-            requireRender = true;
+            forceRerender = true;
         }
 
         if (_frozenLeftCount != FrozenLeftCount ||
@@ -330,7 +331,9 @@ public partial class Datasheet : SheetComponentBase, IAsyncDisposable
             _numberPrecisionDisplay = Math.Min(15, NumberPrecisionDisplay);
         }
 
-        if (requireRender)
+        if (forceRerender)
+            ForceReRender();
+        else if (requireRender)
         {
             _sheetIsDirty = true;
             StateHasChanged();
@@ -583,7 +586,9 @@ public partial class Datasheet : SheetComponentBase, IAsyncDisposable
                 _sheet.Selection.ClearSelections();
             }
 
-            if (args.Row == -1)
+            if (args.Row == -1 && args.Col == -1)
+                return;
+            else if (args.Row == -1)
                 _sheet.Selection.BeginSelectingCol(args.Col);
             else if (args.Col == -1)
                 _sheet.Selection.BeginSelectingRow(args.Row);
